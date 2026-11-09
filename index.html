@@ -106,7 +106,7 @@ legend{font:700 12px var(--ui);letter-spacing:.06em;text-transform:uppercase;col
         <span id="msg" role="status"></span>
       </div>
       <article class="paper" id="paper"></article>
-      <p class="note">Data yang kamu isi hanya diproses di browsermu dan tidak dikirim ke server. Ini template umum, bukan nasihat hukum. Untuk transaksi bernilai besar, konsultasikan dengan advokat atau notaris. Tempel meterai Rp10.000 pada tiap rangkap yang ditandatangani.</p>
+      <p class="note">Data yang kamu isi hanya diproses di browsermu dan tidak dikirim ke server. Ini template umum, bukan nasihat hukum. Untuk transaksi bernilai besar atau perkara pidana, konsultasikan dengan advokat atau notaris. Tempel meterai Rp10.000 pada tiap rangkap yang ditandatangani. Surat pidana disusun mengacu pada KUHP (UU 1/2023) dan KUHAP (UU 20/2025) yang berlaku sejak 2 Januari 2026; formulir resmi instansi bisa berbeda.</p>
     </section>
   </div>
 </div>
@@ -145,7 +145,10 @@ legend{font:700 12px var(--ui);letter-spacing:.06em;text-transform:uppercase;col
     function cell(lbl,name,m){return '<div>'+lbl+'<div class="sp">'+(m?'<div class="materai">Meterai<br>Rp10.000</div>':'')+'</div><div class="nm">'+name+'</div></div>'}
     return '<div class="sign">'+cell(a[0],a[1],mat==='a')+cell(b[0],b[1],mat==='b')+'</div>';
   }
+  function sign1(lbl,name,mat){return '<div class="sign"><div></div><div>'+lbl+'<div class="sp">'+(mat?'<div class="materai">Meterai<br>Rp10.000</div>':'')+'</div><div class="nm">'+name+'</div></div></div>'}
+  function kpd(x){return '<p>Kepada Yth.<br>'+f(x)+'<br>di tempat</p>'}
   function place(v){return '<p class="place">'+f(v.kota)+', '+fd(v.tgl)+'</p>'}
+  function has(x){return !!(x&&String(x).trim())}
 
   var today=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Jakarta'});
   function person(p,lbl,extra){
@@ -153,6 +156,7 @@ legend{font:700 12px var(--ui);letter-spacing:.06em;text-transform:uppercase;col
     if(extra)o.push({id:p+'job',l:'Pekerjaan'});
     o.push({id:p+'alamat',l:'Alamat',t:'textarea'});return o;
   }
+  function pid(v,p){return idt([['Nama',f(v[p+'nama'])],['NIK',f(v[p+'nik'])],['Pekerjaan',f(v[p+'job'])],['Alamat',f(v[p+'alamat'])]])}
 
   var T={
     sewa:{name:'Sewa menyewa',
@@ -248,9 +252,151 @@ legend{font:700 12px var(--ui);letter-spacing:.06em;text-transform:uppercase;col
         '<p>Dengan ini menyatakan dengan sebenarnya bahwa:</p><p>'+fl(v.isi)+'</p>'+
         '<p>Demikian surat pernyataan ini saya buat dengan sebenar-benarnya, tanpa paksaan dari pihak mana pun. Apabila di kemudian hari terbukti pernyataan ini tidak benar, saya bersedia menerima konsekuensi sesuai ketentuan hukum yang berlaku.</p>'+
         place(v)+'<div class="sign"><div></div><div>Yang membuat pernyataan<div class="sp"><div class="materai">Meterai<br>Rp10.000</div></div><div class="nm">'+f(v.a_nama)+'</div></div></div>';
+      }},
+
+    // ---- Surat pidana (mengacu KUHP UU 1/2023 dan KUHAP UU 20/2025) ----
+    lapor:{name:'Laporan polisi',
+      fields:[].concat(person('a_','Pelapor / pengadu',1),[
+        {g:'Tujuan surat'},
+        {id:'tujuan',l:'Ditujukan kepada',ph:'Kepala Kepolisian Sektor / Resor …'},
+        {id:'jenis',l:'Jenis',t:'select',opts:['laporan','pengaduan']},
+        {g:'Terlapor'},
+        {id:'t_nama',l:'Nama terlapor (jika diketahui)'},
+        {id:'t_alamat',l:'Alamat terlapor (jika diketahui)',t:'textarea'},
+        {g:'Peristiwa'},
+        {id:'waktu',l:'Tanggal kejadian',t:'date'},
+        {id:'tempat',l:'Tempat kejadian',t:'textarea'},
+        {id:'dugaan',l:'Dugaan perbuatan (boleh dikosongkan)',ph:'Contoh: penipuan'},
+        {id:'uraian',l:'Uraian kejadian',t:'textarea',ph:'Ceritakan kronologi secara runtut'},
+        {id:'bukti',l:'Bukti dan saksi',t:'textarea'},
+        {g:'Penandatanganan'},{id:'kota',l:'Kota'},{id:'tgl',l:'Tanggal',t:'date'}]),
+      def:{a_nama:'Dewi Lestari',a_nik:'1234567890123456',a_job:'Mahasiswa',a_alamat:'Jl. Cempaka No. 7, Tangerang',tujuan:'Kepala Kepolisian Resor Tangerang Selatan',jenis:'laporan',t_nama:'',t_alamat:'',waktu:today,tempat:'Jl. Raya Pamulang, Tangerang Selatan',dugaan:'penipuan',uraian:'Pada tanggal tersebut saya membeli barang secara daring dari akun penjual tertentu dan telah mentransfer pembayaran, namun barang tidak pernah dikirim dan penjual tidak lagi dapat dihubungi.',bukti:'Bukti transfer, tangkapan layar percakapan, dan profil akun penjual.',kota:'Tangerang Selatan',tgl:today},
+      render:function(v){
+        var jn=v.jenis==='pengaduan'?'pengaduan':'laporan';
+        return '<h2>SURAT '+jn.toUpperCase()+'</h2><p class="nomor">&nbsp;</p>'+kpd(v.tujuan)+
+        '<p>Perihal: <b>'+(jn==='pengaduan'?'Pengaduan':'Laporan')+(has(v.dugaan)?' dugaan '+e(v.dugaan.trim()):' peristiwa pidana')+'</b></p>'+
+        '<p>Dengan hormat,</p><p>Yang bertanda tangan di bawah ini:</p>'+pid(v,'a_')+
+        '<p>Dengan ini mengajukan '+jn+' atas peristiwa yang terjadi pada tanggal '+fd(v.waktu)+' bertempat di '+f(v.tempat)+', dengan uraian sebagai berikut:</p><p>'+fl(v.uraian)+'</p>'+
+        '<p>Pihak yang diduga terlibat (terlapor): '+(has(v.t_nama)?'<span class="v">'+e(v.t_nama.trim())+'</span>'+(has(v.t_alamat)?', beralamat di '+fl(v.t_alamat):''):'belum diketahui identitasnya')+'.</p>'+
+        '<p>Bukti dan saksi yang dapat saya sampaikan: '+fl(v.bukti)+'</p>'+
+        '<p>Saya memohon agar '+(jn==='pengaduan'?'terlapor diproses':'laporan ini ditindaklanjuti')+' sesuai ketentuan hukum yang berlaku, serta agar saya diberikan surat tanda penerimaan laporan dan diberi tahu perkembangan penanganannya.</p>'+
+        '<p>Demikian '+jn+' ini saya sampaikan dengan sebenarnya. Atas perhatian Bapak/Ibu, saya ucapkan terima kasih.</p>'+
+        place(v)+sign1('Pelapor',f(v.a_nama));
+      }},
+    cabut:{name:'Cabut laporan',
+      fields:[].concat(person('a_','Pelapor / pengadu',1),[
+        {g:'Perkara'},
+        {id:'tujuan',l:'Ditujukan kepada',ph:'Kepala Kepolisian Sektor / Resor …'},
+        {id:'nomor',l:'Nomor laporan (LP / STPL)'},
+        {id:'tgllapor',l:'Tanggal laporan dibuat',t:'date'},
+        {id:'t_nama',l:'Nama terlapor'},
+        {id:'dugaan',l:'Perkara yang dilaporkan',ph:'Contoh: penghinaan'},
+        {id:'alasan',l:'Alasan pencabutan',t:'textarea',ph:'Contoh: sudah ada perdamaian'},
+        {g:'Penandatanganan'},{id:'kota',l:'Kota'},{id:'tgl',l:'Tanggal',t:'date'}]),
+      def:{a_nama:'Dewi Lestari',a_nik:'1234567890123456',a_job:'Mahasiswa',a_alamat:'Jl. Cempaka No. 7, Tangerang',tujuan:'Kepala Kepolisian Resor Tangerang Selatan',nomor:'LP/B/123/XI/2026/SPKT',tgllapor:'2026-11-01',t_nama:'Andi Pratama',dugaan:'penghinaan',alasan:'Kedua pihak telah berdamai secara kekeluargaan.',kota:'Tangerang Selatan',tgl:today},
+      render:function(v){
+        return '<h2>SURAT PENCABUTAN LAPORAN / PENGADUAN</h2><p class="nomor">&nbsp;</p>'+kpd(v.tujuan)+
+        '<p>Perihal: <b>Pencabutan laporan / pengaduan Nomor '+f(v.nomor)+'</b></p>'+
+        '<p>Dengan hormat,</p><p>Yang bertanda tangan di bawah ini:</p>'+pid(v,'a_')+
+        '<p>Dengan ini menyatakan mencabut laporan / pengaduan saya Nomor '+f(v.nomor)+' tertanggal '+fd(v.tgllapor)+' atas dugaan '+f(v.dugaan)+' dengan terlapor '+f(v.t_nama)+', dengan alasan:</p><p>'+fl(v.alasan)+'</p>'+
+        '<p>Pencabutan ini saya lakukan atas kemauan sendiri, tanpa paksaan, ancaman, atau tekanan dari pihak mana pun. Saya memohon agar pencabutan ini diproses sesuai ketentuan hukum yang berlaku.</p>'+
+        '<p>Demikian surat pencabutan ini saya buat dengan sebenarnya.</p>'+
+        place(v)+sign1('Pelapor / pengadu',f(v.a_nama),true);
+      }},
+    sp2hp:{name:'Tanya perkembangan laporan',
+      fields:[].concat(person('a_','Pelapor',1),[
+        {g:'Laporan'},
+        {id:'tujuan',l:'Ditujukan kepada',ph:'Kepala Satuan Reserse Kriminal …'},
+        {id:'nomor',l:'Nomor laporan (LP / STPL)'},
+        {id:'tgllapor',l:'Tanggal laporan dibuat',t:'date'},
+        {id:'dugaan',l:'Perkara yang dilaporkan',ph:'Contoh: penipuan'},
+        {id:'tambahan',l:'Informasi tambahan (boleh dikosongkan)',t:'textarea'},
+        {g:'Penandatanganan'},{id:'kota',l:'Kota'},{id:'tgl',l:'Tanggal',t:'date'}]),
+      def:{a_nama:'Dewi Lestari',a_nik:'1234567890123456',a_job:'Mahasiswa',a_alamat:'Jl. Cempaka No. 7, Tangerang',tujuan:'Kepala Satuan Reserse Kriminal Polres Tangerang Selatan',nomor:'LP/B/123/XI/2026/SPKT',tgllapor:'2026-11-01',dugaan:'penipuan',tambahan:'',kota:'Tangerang Selatan',tgl:today},
+      render:function(v){
+        return '<h2>SURAT PERMOHONAN INFORMASI PERKEMBANGAN LAPORAN</h2><p class="nomor">&nbsp;</p>'+kpd(v.tujuan)+
+        '<p>Perihal: <b>Permohonan informasi perkembangan laporan Nomor '+f(v.nomor)+'</b></p>'+
+        '<p>Dengan hormat,</p><p>Yang bertanda tangan di bawah ini:</p>'+pid(v,'a_')+
+        '<p>Saya adalah pelapor dalam laporan Nomor '+f(v.nomor)+' tertanggal '+fd(v.tgllapor)+' atas dugaan '+f(v.dugaan)+'. Sehubungan dengan itu, saya memohon agar diberikan informasi mengenai perkembangan penanganan laporan tersebut, termasuk surat pemberitahuan perkembangan hasil penyidikan (SP2HP).</p>'+
+        (has(v.tambahan)?'<p>Informasi tambahan yang dapat saya sampaikan: '+fl(v.tambahan)+'</p>':'')+
+        '<p>Saya bersedia memberikan keterangan atau melengkapi bukti apabila diperlukan. Atas perhatian Bapak/Ibu, saya ucapkan terima kasih.</p>'+
+        place(v)+sign1('Pelapor',f(v.a_nama));
+      }},
+    khukum:{name:'Kuasa hukum pidana',
+      fields:[].concat(person('a_','Pemberi kuasa',1),[
+        {g:'Penerima kuasa (advokat)'},
+        {id:'b_nama',l:'Nama advokat'},
+        {id:'b_kantor',l:'Kantor hukum'},
+        {id:'b_alamat',l:'Alamat kantor',t:'textarea'},
+        {g:'Isi kuasa'},
+        {id:'perkara',l:'Perkara',t:'textarea',ph:'Contoh: Laporan Polisi Nomor … atas dugaan …'},
+        {id:'tingkat',l:'Tahap pemeriksaan',t:'select',opts:['penyelidikan dan penyidikan','pemeriksaan di sidang pengadilan','penyelidikan, penyidikan, sampai dengan pemeriksaan di sidang pengadilan','permohonan praperadilan']},
+        {id:'subs',l:'Hak substitusi',t:'select',opts:['dengan hak substitusi','tanpa hak substitusi']},
+        {g:'Penandatanganan'},{id:'kota',l:'Kota'},{id:'tgl',l:'Tanggal',t:'date'}]),
+      def:{a_nama:'Dewi Lestari',a_nik:'1234567890123456',a_job:'Mahasiswa',a_alamat:'Jl. Cempaka No. 7, Tangerang',b_nama:'Rudi Hartono, S.H.',b_kantor:'Kantor Hukum Hartono & Rekan',b_alamat:'Jl. Flamboyan No. 2, Tangerang',perkara:'Laporan Polisi Nomor LP/B/123/XI/2026/SPKT atas dugaan penipuan.',tingkat:'penyelidikan dan penyidikan',subs:'dengan hak substitusi',kota:'Tangerang',tgl:today},
+      render:function(v){
+        return '<h2>SURAT KUASA KHUSUS</h2><p class="nomor">&nbsp;</p>'+
+        '<p>Yang bertanda tangan di bawah ini:</p>'+pid(v,'a_')+
+        '<p>Selanjutnya disebut <b>PEMBERI KUASA</b>.</p><p>Dengan ini memberikan kuasa khusus kepada:</p>'+
+        idt([['Nama',f(v.b_nama)],['Kantor',f(v.b_kantor)],['Alamat',f(v.b_alamat)]])+
+        '<p>Advokat/penasihat hukum pada kantor tersebut, selanjutnya disebut <b>PENERIMA KUASA</b>.</p>'+
+        '<p style="text-align:center"><b>—— KHUSUS ——</b></p>'+
+        '<p>Untuk mendampingi dan mewakili Pemberi Kuasa dalam perkara: '+fl(v.perkara)+' pada tahap '+f(v.tingkat)+'.</p>'+
+        '<p>Dalam menjalankan kuasa ini, Penerima Kuasa berhak mendampingi Pemberi Kuasa dalam pemeriksaan, menghadap pejabat atau instansi yang berwenang, mengajukan permohonan, keberatan, atau upaya hukum yang diperlukan, menerima dan menyerahkan dokumen, serta melakukan tindakan sah lainnya demi kepentingan Pemberi Kuasa dalam perkara tersebut. Kuasa ini diberikan '+f(v.subs)+'.</p>'+
+        '<p>Demikian surat kuasa ini dibuat dengan sebenarnya untuk dipergunakan sebagaimana mestinya.</p>'+
+        place(v)+sign(['Penerima Kuasa',f(v.b_nama)],['Pemberi Kuasa',f(v.a_nama)],'b');
+      }},
+    tangguh:{name:'Penangguhan penahanan',
+      fields:[].concat(person('a_','Pemohon',1),[
+        {id:'hubungan',l:'Hubungan dengan yang ditahan',ph:'suami / istri / orang tua / kuasa hukum'},
+        {g:'Yang ditahan'},
+        {id:'t_nama',l:'Nama tersangka / terdakwa'},
+        {id:'t_alamat',l:'Alamat',t:'textarea'},
+        {g:'Perkara'},
+        {id:'tujuan',l:'Ditujukan kepada',ph:'Kepala Kepolisian … / Kepala Kejaksaan … / Ketua Pengadilan Negeri …'},
+        {id:'nomor',l:'Nomor laporan / perkara'},
+        {id:'sejak',l:'Ditahan sejak',t:'date'},
+        {id:'alasan',l:'Alasan permohonan',t:'textarea',ph:'Contoh: sakit, tulang punggung keluarga, kooperatif'},
+        {id:'jaminan',l:'Jaminan',t:'select',opts:['jaminan orang (Pemohon bersedia menjadi penjamin)','jaminan uang','tanpa jaminan tambahan']},
+        {g:'Penandatanganan'},{id:'kota',l:'Kota'},{id:'tgl',l:'Tanggal',t:'date'}]),
+      def:{a_nama:'Siti Rahma',a_nik:'1234567890123456',a_job:'Ibu rumah tangga',a_alamat:'Jl. Kenanga No. 5, Jakarta Selatan',hubungan:'istri',t_nama:'Budi Santoso',t_alamat:'Jl. Kenanga No. 5, Jakarta Selatan',tujuan:'Kepala Kepolisian Resor Jakarta Selatan',nomor:'LP/B/456/X/2026/SPKT',sejak:today,alasan:'Yang bersangkutan adalah tulang punggung keluarga, bersikap kooperatif selama pemeriksaan, dan memiliki tempat tinggal tetap.',jaminan:'jaminan orang (Pemohon bersedia menjadi penjamin)',kota:'Jakarta Selatan',tgl:today},
+      render:function(v){
+        return '<h2>SURAT PERMOHONAN PENANGGUHAN PENAHANAN</h2><p class="nomor">&nbsp;</p>'+kpd(v.tujuan)+
+        '<p>Perihal: <b>Permohonan penangguhan penahanan atas nama '+f(v.t_nama)+'</b></p>'+
+        '<p>Dengan hormat,</p><p>Yang bertanda tangan di bawah ini:</p>'+pid(v,'a_')+
+        '<p>Selaku '+f(v.hubungan)+' dari '+f(v.t_nama)+(has(v.t_alamat)?', beralamat di '+fl(v.t_alamat):'')+', yang ditahan sejak '+fd(v.sejak)+' dalam perkara Nomor '+f(v.nomor)+', dengan ini mengajukan permohonan penangguhan penahanan.</p>'+
+        '<p>Adapun alasan permohonan ini adalah sebagai berikut:</p><p>'+fl(v.alasan)+'</p>'+
+        '<p>Pemohon menjamin bahwa yang bersangkutan tidak akan melarikan diri, tidak akan merusak atau menghilangkan barang bukti, dan tidak akan mengulangi perbuatannya. Sebagai jaminan, Pemohon menyediakan '+f(v.jaminan)+'. Pemohon juga bersedia memenuhi syarat yang ditetapkan oleh pejabat yang berwenang, antara lain kewajiban melapor.</p>'+
+        '<p>Demikian permohonan ini kami sampaikan. Atas perhatian Bapak/Ibu, kami ucapkan terima kasih.</p>'+
+        place(v)+sign1('Pemohon',f(v.a_nama));
+      }},
+    prapid:{name:'Praperadilan',
+      fields:[].concat([{g:'Pengadilan'},{id:'pn',l:'Pengadilan Negeri',ph:'Contoh: Jakarta Selatan'}],person('a_','Pemohon',1),[
+        {g:'Termohon dan objek'},
+        {id:'termohon',l:'Termohon',ph:'Kepolisian … c.q. Kepala Kepolisian …'},
+        {id:'objek',l:'Yang dipersoalkan',t:'select',opts:['sah atau tidaknya penangkapan','sah atau tidaknya penahanan','sah atau tidaknya penetapan tersangka','sah atau tidaknya penggeledahan','sah atau tidaknya penyitaan','sah atau tidaknya penghentian penyidikan','sah atau tidaknya upaya paksa yang dilakukan Termohon']},
+        {id:'nomor',l:'Nomor surat yang dipersoalkan (boleh dikosongkan)'},
+        {g:'Isi permohonan'},
+        {id:'duduk',l:'Duduk perkara',t:'textarea',ph:'Kronologi singkat peristiwa'},
+        {id:'alasan',l:'Alasan permohonan',t:'textarea',ph:'Mengapa tindakan Termohon dianggap tidak sah'},
+        {id:'petitum',l:'Yang dimohonkan (petitum)',t:'textarea'},
+        {g:'Penandatanganan'},{id:'kota',l:'Kota'},{id:'tgl',l:'Tanggal',t:'date'}]),
+      def:{pn:'Jakarta Selatan',a_nama:'Budi Santoso',a_nik:'1234567890123456',a_job:'Wiraswasta',a_alamat:'Jl. Melati No. 10, Tangerang Selatan',termohon:'Kepolisian Negara Republik Indonesia c.q. Kepala Kepolisian Resor Jakarta Selatan',objek:'sah atau tidaknya penetapan tersangka',nomor:'',duduk:'Pemohon ditetapkan sebagai tersangka dalam suatu perkara tanpa pernah dipanggil dan diperiksa sebelumnya.',alasan:'Penetapan tersangka terhadap Pemohon dilakukan tanpa prosedur dan alat bukti yang cukup sebagaimana disyaratkan hukum acara pidana.',petitum:'Mengabulkan permohonan Pemohon untuk seluruhnya.\nMenyatakan tindakan Termohon tersebut tidak sah dan tidak mempunyai kekuatan hukum mengikat.\nMemerintahkan Termohon untuk memulihkan hak Pemohon.',kota:'Jakarta Selatan',tgl:today},
+      render:function(v){
+        return '<h2>PERMOHONAN PRAPERADILAN</h2><p class="nomor">&nbsp;</p>'+
+        '<p>Kepada Yth.<br>Ketua Pengadilan Negeri '+f(v.pn)+'<br>di tempat</p>'+
+        '<p>Perihal: <b>Permohonan praperadilan tentang '+f(v.objek)+'</b></p>'+
+        '<p>Dengan hormat,</p><p>Yang bertanda tangan di bawah ini:</p>'+pid(v,'a_')+
+        '<p>Selanjutnya disebut <b>PEMOHON</b>, dengan ini mengajukan permohonan praperadilan terhadap:</p><p style="margin-left:12px">'+f(v.termohon)+', selanjutnya disebut <b>TERMOHON</b>.</p>'+
+        '<p>Permohonan ini diajukan atas '+f(v.objek)+(has(v.nomor)?' sebagaimana tertuang dalam surat Nomor '+f(v.nomor):'')+', dengan uraian sebagai berikut:</p>'+
+        '<h4>I. Duduk Perkara</h4><p>'+fl(v.duduk)+'</p>'+
+        '<h4>II. Alasan Permohonan</h4><p>'+fl(v.alasan)+'</p>'+
+        '<h4>III. Petitum</h4><p>Berdasarkan hal-hal tersebut di atas, Pemohon memohon kepada Hakim yang memeriksa permohonan ini untuk memutus:</p><p>'+fl(v.petitum)+'</p>'+
+        '<p>Demikian permohonan ini diajukan. Atas perhatian dan kebijaksanaan Yang Mulia Hakim, Pemohon mengucapkan terima kasih.</p>'+
+        place(v)+sign1('Pemohon',f(v.a_nama));
       }}
   };
-  var order=['sewa','utang','kuasa','nyata'], cur='sewa', vals={};
+  var order=['sewa','utang','kuasa','nyata','lapor','cabut','sp2hp','khukum','tangguh','prapid'], cur='sewa', vals={};
   order.forEach(function(k){vals[k]=Object.assign({},T[k].def)});
 
   function money_hint(el,h){var n=num(el.value);h.textContent=n?rp(n)+' ('+terbilang(n)+' rupiah)':''}
@@ -265,7 +411,7 @@ legend{font:700 12px var(--ui);letter-spacing:.06em;text-transform:uppercase;col
       else if(type==='select'){el=document.createElement('select');fd_.opts.forEach(function(o){var op=document.createElement('option');op.value=o;op.textContent=o;el.appendChild(op)})}
       else{el=document.createElement('input');
         if(type==='date')el.type='date'; else if(type==='money'){el.type='text';el.inputMode='numeric'} else if(type==='int'){el.type='text';el.inputMode='numeric'} else el.type='text'}
-      el.id=id; if(fd_.ph)el.placeholder=fd_.ph; el.maxLength=type==='textarea'?800:120;
+      el.id=id; if(fd_.ph)el.placeholder=fd_.ph; el.maxLength=type==='textarea'?2000:120;
       el.value=vals[cur][fd_.id]||''; w.appendChild(el);
       var hint=null; if(type==='money'){hint=document.createElement('div');hint.className='hint';w.appendChild(hint);money_hint(el,hint)}
       el.addEventListener('input',function(){vals[cur][fd_.id]=el.value; if(hint)money_hint(el,hint); render()});
